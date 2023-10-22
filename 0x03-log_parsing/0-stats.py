@@ -1,44 +1,40 @@
 #!/usr/bin/python3
-"""
-A script that reads stdin line by line and computes metrics.
-"""
+"""This module reads stdin line by line and computes metrics"""
+import sys
 
-import re
+possible_status_codes = [200, 301, 400, 401, 403, 404, 405, 500]
+lines_read = 0
+status_codes_map = {}
+total_file_size = 0
 
-def process_log(lines):
-    """Computes metrics line by line"""
-    total_size = 0
-    status_counts = {}
 
-    for i, line in enumerate(lines, start=1):
-        match = re.match(r'^\d+\.\d+\.\d+\.\d+ - \[.*\] "GET /projects/260 HTTP/1\.1" (\d+) (\d+)$', line)
-        if match:
-            status_code, file_size = int(match.group(1)), int(match.group(2))
-            total_size += file_size
+def print_stats():
+    """prints out the statistics"""
+    print("File size: {}".format(total_file_size))
+    for status, count in sorted(status_codes_map.items()):
+        print("{}: {}".format(status, count))
 
-            if status_code in status_counts:
-                status_counts[status_code] += 1
-            else:
-                status_counts[status_code] = 1
 
-        if i % 10 == 0:
-            print_statistics(total_size, status_counts)
+try:
+    for line in sys.stdin:
+        line_tokens = line.split()
+        try:
+            file_size = int(line_tokens[-1])
+            total_file_size += file_size
+            status_code = int(line_tokens[-2])
+            if status_code in possible_status_codes:
+                if status_code in status_codes_map:
+                    status_codes_map[status_code] += 1
+                else:
+                    status_codes_map[status_code] = 1
+        except ValueError:
+            pass
+        lines_read += 1
+        if lines_read % 10 == 0:
+            print_stats()
 
-def print_statistics(total_size, status_counts):
-    print(f"Total file size: {total_size}")
-    for status_code in sorted(status_counts.keys()):
-        print(f"{status_code}: {status_counts[status_code]}")
-    print()
+    if (lines_read == 0) or (lines_read % 10 != 0):
+        print_stats()
 
-if __name__ == "__main__":
-    log_lines = []
-    try:
-        while True:
-            line = input()
-            log_lines.append(line)
-            if len(log_lines) % 10 == 0:
-                process_log(log_lines)
-                log_lines.clear()
-    except KeyboardInterrupt:
-        if log_lines:
-            process_log(log_lines)
+except (KeyboardInterrupt):
+    print_stats()

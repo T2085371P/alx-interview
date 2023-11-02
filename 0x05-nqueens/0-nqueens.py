@@ -1,80 +1,59 @@
 #!/usr/bin/python3
-'''A Python program that solves the N Queens problem for a given N.'''
-
+"""N Queens"""
 import sys
 
 
-def is_queen_conflict(board, row, col, N):
-    """
-    Check if placing a queen at the given position conflicts
-    with existing queens.
+def print_board(board, n):
+    """Print allocated positions to the queen"""
+    b = []
 
-    Args:
-        board (list): The current placement of queens on the board.
-        row (int): The row to check for conflicts.
-        col (int): The column to check for conflicts.
-        N (int): The size of the board.
-
-    Returns:
-        bool: True if the position conflicts with existing queens,
-        False otherwise.
-    """
-    # Check if there's a queen in the same row or diagonal
-    for i in range(col):
-        if board[row][i] == 1 or board[row][col - i - 1] == 1:
-            return False
-        if row - i - 1 >= 0 and board[row - i - 1][col - i - 1] == 1:
-            return False
-        if row + i + 1 < N and board[row + i + 1][col - i - 1] == 1:
-            return False
-    return True
+    for i in range(n):
+        for j in range(n):
+            if j == board[i]:
+                b.append([i, j])
+    print(b)
 
 
-def solve_nqueens(N):
-    """
-    Solve the N Queens problem and return a list of all solutions.
-    Each solution is represented as a 2D list.
-    """
-    board = [[0 for _ in range(N)] for _ in range(N)]
-    solutions = []
-
-    def solve(row):
-        """
-        Recursively find solutions by placing queens row by row.
-        """
-        if row == N:
-            solutions.append([(r, c) for r, c in enumerate(board[row])])
-            return
-
-        for col in range(N):
-            if not is_queen_conflict(board, row, col, N):
-                board[row][col] = 1
-                solve(row + 1)
-                board[row][col] = 0
-
-    solve(0)
-    return solutions
+def is_position_safe(board, i, j, r):
+    """Checks if the position is safe for the queen"""
+    return board[i] in (j, j - i + r, i - r + j)
 
 
-if __name__ == "__main__":
-    # Check for correct number of command-line arguments
-    if len(sys.argv) != 2:
-        print("Usage: nqueens N")
-        sys.exit(1)
+def safe_positions(board, row, n):
+    """Find all safe positions where the queen can be allocated"""
+    if row == n:
+        print_board(board, n)
 
-    try:
-        N = int(sys.argv[1])
-    except ValueError:
-        print("N must be a number")
-        sys.exit(1)
+    else:
+        for j in range(n):
+            allowed = True
+            for i in range(row):
+                if is_position_safe(board, i, j, row):
+                    allowed = False
+            if allowed:
+                board[row] = j
+                safe_positions(board, row + 1, n)
 
-    if N < 4:
-        print("N must be at least 4")
-        sys.exit(1)
 
-    solutions = solve_nqueens(N)
+def create_board(size):
+    """Generates the board"""
+    return [0 * size for i in range(size)]
 
-    # Print the solutions
-    for solution in solutions:
-        # print([[row, col] for row, col in enumerate(solution)])
-        print(solution)
+
+if len(sys.argv) != 2:
+    print("Usage: nqueens N")
+    exit(1)
+
+try:
+    n = int(sys.argv[1])
+except BaseException:
+    print("N must be a number")
+    exit(1)
+
+if (n < 4):
+    print("N must be at least 4")
+    exit(1)
+
+board = create_board(int(n))
+row = 0
+safe_positions(board, row, int(n))
